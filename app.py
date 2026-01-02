@@ -4,10 +4,12 @@ FastAPI Programming Joke Generator
 A web API that serves clean, family-friendly programming jokes.
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Security, HTTPException, status
+from fastapi.security import APIKeyHeader
 from fastapi.responses import JSONResponse
 import random
 import uvicorn
+import os
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -15,6 +17,40 @@ app = FastAPI(
     description="A simple API that serves random programming jokes",
     version="1.0.0"
 )
+
+# API Key Configuration
+# You can set this via environment variable: export AUTH_KEY=your-secret-key
+API_KEY = os.getenv("AUTH_KEY", "your-secret-api-key-12345")
+API_KEY_NAME = "X-API-Key"
+
+# Create API key header dependency
+api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
+
+
+async def verify_api_key(api_key: str = Security(api_key_header)):
+    """
+    Verify the API key from the request header.
+    
+    Args:
+        api_key: The API key from the X-API-Key header
+        
+    Returns:
+        str: The API key if valid
+        
+    Raises:
+        HTTPException: If API key is missing or invalid
+    """
+    if api_key is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing API Key. Please provide X-API-Key header.",
+        )
+    if api_key != API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid API Key.",
+        )
+    return api_key
 
 
 def get_jokes():
@@ -82,21 +118,25 @@ def get_jokes():
 async def root():
     """
     Root endpoint that provides API information.
+    Note: This endpoint is public and does not require authentication.
     """
     return {
         "message": "Welcome to the Programming Joke Generator API!",
         "endpoints": {
-            "/joke": "Get a random joke",
-            "/jokes": "Get all jokes",
+            "/joke": "Get a random joke (requires API key)",
+            "/jokes": "Get all jokes (requires API key)",
+            "/health": "Health check (public)",
             "/docs": "Interactive API documentation"
-        }
+        },
+        "authentication": "Use X-API-Key header for protected endpoints"
     }
 
 
 @app.get("/joke")
-async def get_random_joke():
+async def get_random_joke(api_key: str = Security(verify_api_key)):
     """
     Returns a randomly selected joke from the collection.
+    Requires API key authentication via X-API-Key header.
     
     Returns:
         dict: A JSON object containing the joke
@@ -111,9 +151,10 @@ async def get_random_joke():
 
 
 @app.get("/jokes")
-async def get_all_jokes():
+async def get_all_jokes(api_key: str = Security(verify_api_key)):
     """
     Returns all jokes in the collection.
+    Requires API key authentication via X-API-Key header.
     
     Returns:
         dict: A JSON object containing all jokes
