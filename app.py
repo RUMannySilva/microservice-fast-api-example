@@ -63,7 +63,16 @@ def get_jokes():
         
         "Why did the developer go to the doctor? Because he had a case of the runs (infinite loops)!",
         
-        "What's a programmer's favorite type of music? Algo-rhythm and blues!"
+        "What's a programmer's favorite type of music? Algo-rhythm and blues!",
+
+        "Why do programmers prefer dark mode? Because light attracts bugs!",
+        
+        "How do you comfort a JavaScript bug? You console it!",
+        
+        "Why did the programmer quit his job? He didn't get arrays!",
+        
+        "What's a programmer's favorite hangout place? Foo Bar!",
+        
     ]
     
     return jokes
